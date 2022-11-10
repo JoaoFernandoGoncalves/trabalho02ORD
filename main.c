@@ -4,7 +4,7 @@
 #include <math.h>
 #include <string.h>
 
-#define BUCKET_LENGTH 5
+#define TAM_BUCKET 5
 
 FILE *arqv_dir;
 FILE *arqv_bckt;
@@ -18,7 +18,7 @@ typedef struct
 {
     int prof;
     int in_key;
-    int chaves [BUCKET_LENGTH];
+    int chaves [TAM_BUCKET];
 }bucket;
 
 typedef struct
@@ -32,13 +32,16 @@ typedef struct
     int dir_prof;
 }diretory;
 
+void bk_add_key(bucket balde, int key);
+void bk_split(bucket balde, diretory diretorio);
+
 
 void inicializa(char *nome_dir, char *nome_bucket)
 {
     FILE *arqv_dir, *arqv_bucket;
 
-    arqv_dir = fopen(nome_dir, "w+b");
-    arqv_bucket = fopen(nome_bucket, "w+b");
+    arqv_dir = fopen(nome_dir, "wb+");
+    arqv_bucket = fopen(nome_bucket, "wb+");
 
     /*dir_cell *diretorio;
     int dir_prof = 0;*/
@@ -58,11 +61,11 @@ void inicializa(char *nome_dir, char *nome_bucket)
 
         bucket balde;
         fwrite(&balde, sizeof(balde), 1, arqv_bucket);
-        cell.bucket_rrn = (arqv_bucket, -sizeof(balde), SEEK_CUR);
+        cell.bucket_rrn = fseek(arqv_bucket, -sizeof(balde), SEEK_CUR);
     }
 }
 
-void finaliza(char *nome_dir, char *nome_bucket)
+void finaliza()
 {
     FILE *arqv_dir, *arq_bckt;
     diretory diretorio;
@@ -76,29 +79,30 @@ bool op_find(int key, bucket found_bucket)
 {   
     diretory diretorio;
 
+    bool resultado;
+
     int address = key;
     int rrn_found_bucket = diretorio.cells[address].bucket_rrn;
 
     fseek(arqv_bckt, rrn_found_bucket, SEEK_SET);
     fread(&found_bucket, sizeof(bucket), 1, arqv_bckt);
     
-    for(int i = 0; i < BUCKET_LENGTH; i++)
+    for(int i = 0; i < TAM_BUCKET; i++)
     {
         if(found_bucket.chaves[i] == key)
         {
-            return true;
+            resultado = true;
         }
         else{
-            return false;
+            resultado = false;
         }
     }
-
-
+    return resultado;
 }
 
-/*bool op_add(int key)
+bool op_add(int key, bucket found_bucket)
 {
-    if(op_find(key, found.bucket))
+    if(op_find(key, found_bucket))
     {
         return false;
     }
@@ -109,15 +113,35 @@ bool op_find(int key, bucket found_bucket)
 
 void bk_add_key(bucket balde, int key)
 {
-    if(balde.in_key < BUCKET_LENGTH)
+
+    diretory diretorio;
+    
+    if(balde.in_key < TAM_BUCKET)
     {
-        balde.chaves = malloc(key);
+        fseek(arqv_bckt, EOF, SEEK_SET);
+        fread(&balde, sizeof(balde), 1, arqv_bckt);
+
+        for(int i = 0; i <= TAM_BUCKET; i++)
+        {
+            if(i == TAM_BUCKET)
+            {
+                balde.chaves[i] = key;
+            } 
+        }
     }
     else{
-        bk_split(balde);
-        op_add(key);
+        bk_split(balde, diretorio);
+        op_add(key, balde);
     }
-}*/
+}
+
+void bk_split(bucket balde, diretory diretorio)
+{
+    if(balde.prof == diretorio.dir_prof)
+    {
+        dir_double();
+    }
+}
 
 int main()
 {
